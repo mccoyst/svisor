@@ -24,7 +24,6 @@ func supervise(progs []string) {
 		case cmd := <-deaths:
 			cmd = &exec.Cmd{
 				Path: cmd.Path,
-				Args: cmd.Args,
 				Stdout: os.Stdout,
 				Stderr: os.Stderr,
 			}
