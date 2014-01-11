@@ -3,5 +3,5 @@
 package main
 
 func main() {
-	supervise([]string{"echo"})
+	supervise([]string{"./hi.sh", "./bye.sh"})
 }
