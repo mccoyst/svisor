@@ -3,5 +3,5 @@
 package main
 
 func main() {
-	supervise([]string{"echo hi"})
+	supervise([]string{"echo"})
 }

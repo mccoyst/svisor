@@ -5,17 +5,15 @@ package main
 import (
 	"os"
 	"os/exec"
-	"strings"
 )
 
 func supervise(progs []string) {
 	cmds := make([]*exec.Cmd, 0, len(progs))
 	for _, prog := range progs {
-		args := strings.Fields(prog)
-		if len(args) == 0 {
+		if len(prog) == 0 {
 			continue
 		}
-		cmds = append(cmds, createCmd(args))
+		cmds = append(cmds, createCmd(prog))
 	}
 	deaths := make(chan *exec.Cmd)
 	for _, cmd := range cmds {
@@ -35,8 +33,8 @@ func supervise(progs []string) {
 	}
 }
 
-func createCmd(args []string) *exec.Cmd {
-	c := exec.Command(args[0], args[1:]...)
+func createCmd(prog string) *exec.Cmd {
+	c := exec.Command(prog)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
 	return c
