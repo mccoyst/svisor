@@ -4,6 +4,20 @@
 
 package main
 
+import "time"
+
 func main() {
-	supervise([]string{"./hi.sh", "./bye.sh"})
+	s := New()
+	go s.Supervise()
+	s.Add("./hi.sh")
+	s.Add("./bye.sh")
+
+	time.Sleep(1 * time.Second)
+	s.Remove("./hi.sh")
+
+	time.Sleep(1 * time.Second)
+	s.Remove("./bye.sh")
+
+	time.Sleep(1 * time.Second)
+	s.Stop()
 }

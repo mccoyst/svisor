@@ -5,50 +5,75 @@
 package main
 
 import (
+	"errors"
 	"os"
 	"os/exec"
 )
 
-func supervise(progs []string) {
-	cmds := make([]*exec.Cmd, 0, len(progs))
-	for _, prog := range progs {
-		if len(prog) == 0 {
-			continue
-		}
-		cmds = append(cmds, createCmd(prog))
+type S struct {
+	add    chan string
+	remove chan string
+	deaths chan string
+	stop   chan bool
+	kids   map[string]*exec.Cmd
+}
+
+func New() *S {
+	return &S{
+		add:    make(chan string),
+		remove: make(chan string),
+		deaths: make(chan string),
+		stop:   make(chan bool),
+		kids:   make(map[string]*exec.Cmd),
 	}
-	deaths := make(chan *exec.Cmd)
-	for _, cmd := range cmds {
-		spawn(cmd, deaths)
-	}
+}
+
+func (s *S) Supervise() {
 	for {
 		select {
-		case cmd := <-deaths:
-			cmd = &exec.Cmd{
-				Path: cmd.Path,
-				Stdout: os.Stdout,
-				Stderr: os.Stderr,
+		case prog := <-s.deaths:
+			if s.kids[prog] != nil {
+				s.spawn(prog)
 			}
-			spawn(cmd, deaths)
+		case prog := <-s.add:
+			s.spawn(prog)
+		case prog := <-s.remove:
+			delete(s.kids, prog)
+		case <-s.stop:
+			return
 		}
 	}
 }
 
-func createCmd(prog string) *exec.Cmd {
+func (s *S) Add(prog string) error {
+	if prog == "" {
+		return errors.New("svisor: program name must be nonempty")
+	}
+	s.add <- prog
+	return nil
+}
+
+func (s *S) Remove(prog string) {
+	s.remove <- prog
+}
+
+func (s *S) Stop() {
+	s.stop <- true
+}
+
+func (s *S) spawn(prog string) {
 	c := exec.Command(prog)
 	c.Stdout = os.Stdout
 	c.Stderr = os.Stderr
-	return c
-}
+	s.kids[prog] = c
 
-func spawn(c *exec.Cmd, deaths chan *exec.Cmd) {
-	go func(){
+	go func() {
 		err := c.Run()
 		if err != nil {
 			os.Stderr.WriteString(c.Path + " died: " + err.Error() + "\n")
 		} else {
-			os.Stderr.WriteString(c.Path + " exited normally\n")
+			// os.Stderr.WriteString(c.Path + " exited normally\n")
 		}
-		deaths <- c
+		s.deaths <- prog
 	}()
 }
