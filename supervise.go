@@ -71,10 +71,18 @@ func (s *S) Stop() {
 }
 
 func (s *S) spawn(prog string) {
-	c := exec.Command(prog)
-	c.Stdout = s.Stdout
-	c.Stderr = s.Stderr
-	c.Stdin = s.Stdin
+	aname, err := exec.LookPath(prog)
+	if err != nil {
+		io.WriteString(s.log, prog + " not found. It will not be supervised.\n")
+		return
+	}
+	c := &exec.Cmd{
+		Path: aname,
+		Args: []string{aname},
+		Stdout: s.Stdout,
+		Stderr: s.Stderr,
+		Stdin: s.Stdin,
+	}
 	s.kids[prog] = c
 
 	go func() {
