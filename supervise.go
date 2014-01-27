@@ -6,6 +6,7 @@ package main
 
 import (
 	"errors"
+	"io"
 	"os"
 	"os/exec"
 )
@@ -16,15 +17,18 @@ type S struct {
 	deaths chan string
 	stop   chan bool
 	kids   map[string]*exec.Cmd
+	log	io.Writer
 }
 
-func New() *S {
+// New returns an initialized S, which will log to w.
+func New(w io.Writer) *S {
 	return &S{
 		add:    make(chan string),
 		remove: make(chan string),
 		deaths: make(chan string),
 		stop:   make(chan bool),
 		kids:   make(map[string]*exec.Cmd),
+		log: w,
 	}
 }
 
@@ -70,9 +74,9 @@ func (s *S) spawn(prog string) {
 	go func() {
 		err := c.Run()
 		if err != nil {
-			os.Stderr.WriteString(c.Path + " died: " + err.Error() + "\n")
+			io.WriteString(s.log, c.Path + " died: " + err.Error() + "\n")
 		} else {
-			// os.Stderr.WriteString(c.Path + " exited normally\n")
+			io.WriteString(s.log, c.Path + " exited normally\n")
 		}
 		s.deaths <- prog
 	}()

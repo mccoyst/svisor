@@ -4,10 +4,13 @@
 
 package main
 
-import "time"
+import (
+	"time"
+	"os"
+)
 
 func main() {
-	s := New()
+	s := New(os.Stderr)
 	go s.Supervise()
 	s.Add("./hi.sh")
 	s.Add("./bye.sh")
