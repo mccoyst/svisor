@@ -7,11 +7,13 @@ package main
 import (
 	"time"
 	"os"
+
+	"svisor"
 )
 
 func main() {
 	devnull, _ := os.Open(os.DevNull)
-	s := New(devnull)
+	s := svisor.New(devnull)
 	s.Stdout = os.Stdout
 	s.Stderr = os.Stderr
 	go s.Supervise()
