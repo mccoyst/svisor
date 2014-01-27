@@ -10,7 +10,10 @@ import (
 )
 
 func main() {
-	s := New(os.Stderr)
+	devnull, _ := os.Open(os.DevNull)
+	s := New(devnull)
+	s.Stdout = os.Stdout
+	s.Stderr = os.Stderr
 	go s.Supervise()
 	s.Add("./hi.sh")
 	s.Add("./bye.sh")

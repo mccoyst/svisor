@@ -7,7 +7,6 @@ package main
 import (
 	"errors"
 	"io"
-	"os"
 	"os/exec"
 )
 
@@ -18,9 +17,15 @@ type S struct {
 	stop   chan bool
 	kids   map[string]*exec.Cmd
 	log	io.Writer
+	Stdout	io.Writer
+	Stderr	io.Writer
+	Stdin	io.Reader
 }
 
 // New returns an initialized S, which will log to w.
+// Stdout, Stderr, and Stdin are used to set the
+// the same-named variables in supervised subcommands,
+// and all of them default to nil.
 func New(w io.Writer) *S {
 	return &S{
 		add:    make(chan string),
@@ -67,8 +72,9 @@ func (s *S) Stop() {
 
 func (s *S) spawn(prog string) {
 	c := exec.Command(prog)
-	c.Stdout = os.Stdout
-	c.Stderr = os.Stderr
+	c.Stdout = s.Stdout
+	c.Stderr = s.Stderr
+	c.Stdin = s.Stdin
 	s.kids[prog] = c
 
 	go func() {
