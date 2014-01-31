@@ -16,10 +16,10 @@ type S struct {
 	deaths chan string
 	stop   chan bool
 	kids   map[string]*exec.Cmd
-	log	io.Writer
-	Stdout	io.Writer
-	Stderr	io.Writer
-	Stdin	io.Reader
+	log    io.Writer
+	Stdout io.Writer
+	Stderr io.Writer
+	Stdin  io.Reader
 }
 
 // New returns an initialized S, which will log to w.
@@ -33,7 +33,7 @@ func New(w io.Writer) *S {
 		deaths: make(chan string),
 		stop:   make(chan bool),
 		kids:   make(map[string]*exec.Cmd),
-		log: w,
+		log:    w,
 	}
 }
 
@@ -73,24 +73,24 @@ func (s *S) Stop() {
 func (s *S) spawn(prog string) {
 	aname, err := exec.LookPath(prog)
 	if err != nil {
-		io.WriteString(s.log, prog + " not found. It will not be supervised.\n")
+		io.WriteString(s.log, prog+" not found. It will not be supervised.\n")
 		return
 	}
 	c := &exec.Cmd{
-		Path: aname,
-		Args: []string{aname},
+		Path:   aname,
+		Args:   []string{aname},
 		Stdout: s.Stdout,
 		Stderr: s.Stderr,
-		Stdin: s.Stdin,
+		Stdin:  s.Stdin,
 	}
 	s.kids[prog] = c
 
 	go func() {
 		err := c.Run()
 		if err != nil {
-			io.WriteString(s.log, c.Path + " died: " + err.Error() + "\n")
+			io.WriteString(s.log, c.Path+" died: "+err.Error()+"\n")
 		} else {
-			io.WriteString(s.log, c.Path + " exited normally\n")
+			io.WriteString(s.log, c.Path+" exited normally\n")
 		}
 		s.deaths <- prog
 	}()
