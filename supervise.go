@@ -7,6 +7,7 @@ package svisor
 import (
 	"errors"
 	"io"
+	"log"
 	"os/exec"
 )
 
@@ -16,7 +17,7 @@ type S struct {
 	deaths chan string
 	stop   chan bool
 	kids   map[string]*exec.Cmd
-	log    io.Writer
+	log    *log.Logger
 	Stdout io.Writer
 	Stderr io.Writer
 	Stdin  io.Reader
@@ -33,7 +34,7 @@ func New(w io.Writer) *S {
 		deaths: make(chan string),
 		stop:   make(chan bool),
 		kids:   make(map[string]*exec.Cmd),
-		log:    w,
+		log:    log.New(w, "", log.LstdFlags),
 	}
 }
 
@@ -73,7 +74,7 @@ func (s *S) Stop() {
 func (s *S) spawn(prog string) {
 	aname, err := exec.LookPath(prog)
 	if err != nil {
-		io.WriteString(s.log, prog+" not found. It will not be supervised.\n")
+		s.log.Println(prog, "not found. It will not be supervised.")
 		return
 	}
 	c := &exec.Cmd{
@@ -88,9 +89,9 @@ func (s *S) spawn(prog string) {
 	go func() {
 		err := c.Run()
 		if err != nil {
-			io.WriteString(s.log, c.Path+" died: "+err.Error()+"\n")
+			s.log.Println(c.Path, "died:", err)
 		} else {
-			io.WriteString(s.log, c.Path+" exited normally\n")
+			s.log.Println(c.Path, "exited normally.")
 		}
 		s.deaths <- prog
 	}()
